@@ -112,7 +112,7 @@ class Search extends React.Component {
                             onChange={this.inputHandler}
                             placeholder="e.g. #covid19"
                         />
-                        <button id='btn_search' className='button' type="submit" onClick={this.handleFormSubmit}>Search</button>
+                        <button id='btn_search' className='button' type="submit" onClick={this.handleFormSubmit}>Classify</button>
                         <button id='btn_import' className='button' type="submit" onClick={this.handleFormSubmit}>Import File</button>
 
                         <div >
