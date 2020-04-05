@@ -2,6 +2,10 @@ import React from 'react';
 import { trackPromise } from 'react-promise-tracker';
 import {Spinner} from './spinner/Spinner';
 import Dashboard from './Dashboard';
+import axios from "axios";
+
+const API_URL =  " http://localhost:5000/";
+
 class Search extends React.Component {
     constructor(props) {
         super(props);
@@ -11,6 +15,11 @@ class Search extends React.Component {
         };
         this.inputFileRef = React.createRef();
         this.keyword_search = "";
+        this.axios_instance = axios.create({
+          baseURL: `${API_URL}/`,
+          timeout: 30000
+        });
+
     }
 
     inputHandler = (event) => {
@@ -25,20 +34,38 @@ class Search extends React.Component {
         } while (currentDate - date < milliseconds);
       }
 
-    fetchWithDelay = (url) => {
-        const promise = new Promise((resolve, reject) => {
-          setTimeout(() => {
-            // resolve(fetch(url, {
-            //   method: 'GET',
-            // })
-            //   .then((response) => response.json()));
-            var timeout = 3000;
-            resolve(timeout) 
-          }, 3000)
-        });
+    // fetchWithDelay = (url) => {
+    //     const promise = new Promise((resolve, reject) => {
+    //       setTimeout(() => {
+    //         // resolve(fetch(url, {
+    //         //   method: 'GET',
+    //         // })
+    //         //   .then((response) => response.json()));
+            
+    //         resolve(this.axios_instance.get('/classify')
+    //             .then(function (response) {
+    //               // handle success
+    //               console.log(response);
+    //               return response.data;
+    //             })
+    //             .catch(function (error) {
+    //               // handle error
+    //               console.log(error);
+    //             })
+    //             .then(function () {
+    //               // always executed
+    //             }));
+
+    //         // resolve(this.axios_instance.get('/classify')
+    //         //   .then((response) => response.json()));
+
+    //         // var timeout = 3000;
+    //         // resolve(timeout) 
+    //       })
+    //     });
       
-        return promise;
-      }
+    //     return promise;
+    //   }
 
     handleFormSubmit = e => {
         e.preventDefault();
@@ -46,25 +73,54 @@ class Search extends React.Component {
             this.inputFileRef.current.click();
         } else {
             console.log("keyword_search : " + this.keyword_search);
+            // let res = await this.axios_instance.get('/classify');
+            // console.log("keyword_search res : " + res);
             trackPromise(
-                this.fetchWithDelay("google.com").then((time) => {
-                    console.log("please waiting...." + time);
-                    const dummy_data = [
-                        {
-                          name: 'Postive', value: '80',
-                        },
-                        {
-                          name: 'Negative', value: '23',
-                        },
-                        {
-                          name: 'Non-Hate Speech', value: '85',
-                        },
-                        {
-                          name: 'Hate Speech', value: '31',
-                        },
-                      ];
-                    this.setState({result: dummy_data});
+              this.axios_instance.post('/classify', {
+                text: this.keyword_search
+              }, {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              })
+              .then(function (response) {
+                console.log(response);
+              })
+              .catch(function (error) {
+                console.log(error);
+              })
+                
+            );
+
+            trackPromise(
+              this.axios_instance.get('/classify')
+                .then(response => {
+                    // handle success
+                    console.log(response);
+                    let data = response.data;
+                    let key1 = Object.keys(data).map(key => {
+                      return key;
+                    });
+        
+                    let jsonData = [];
+                    Object.keys(data[key1]).map(key2 => {
+                        let val = data[key1][key2];
+                        val = "" + val.match(/\d+/g);
+                        let temp = { name: key2, value: val};
+                        jsonData.push(temp);
+                        return key2;
+                    });
+                    this.keyword_search = key1;
+                    this.setState({result: jsonData});
                 })
+                .catch(function (error) {
+                  // handle error
+                  console.log(error);
+                })
+                .then(function () {
+                  // always executed
+                })
+                
             );
         }
 
