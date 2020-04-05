@@ -15,6 +15,7 @@ class Search extends React.Component {
         };
         this.inputFileRef = React.createRef();
         this.keyword_search = "";
+        this.classifying = false;
         this.axios_instance = axios.create({
           baseURL: `${API_URL}/`,
           timeout: 30000
@@ -22,8 +23,7 @@ class Search extends React.Component {
 
     }
 
-    inputHandler = (event) => {
-        this.keyword_search = event.target.value
+    inputHandler = async (event) => {
     };
 
     sleep(milliseconds) {
@@ -72,9 +72,15 @@ class Search extends React.Component {
         if (e.target.id == "btn_import") {
             this.inputFileRef.current.click();
         } else {
-            console.log("keyword_search : " + this.keyword_search);
+            this.keyword_search = this.input.value;
+
+            if (this.classifying || this.keyword_search == "") {
+              return;
+            }
+            console.log("keyword_search : " + this.keyword_search );
             // let res = await this.axios_instance.get('/classify');
             // console.log("keyword_search res : " + res);
+            this.classifying = true;
             trackPromise(
               this.axios_instance.post('/classify', {
                 text: this.keyword_search
@@ -105,20 +111,21 @@ class Search extends React.Component {
                     let jsonData = [];
                     Object.keys(data[key1]).map(key2 => {
                         let val = data[key1][key2];
-                        val = "" + val.match(/\d+/g);
+                        val = "" + val.match(/[\d\.]+/g);
                         let temp = { name: key2, value: val};
                         jsonData.push(temp);
                         return key2;
                     });
-                    this.keyword_search = key1;
+                    this.input.value = "";
                     this.setState({result: jsonData});
                 })
                 .catch(function (error) {
                   // handle error
                   console.log(error);
                 })
-                .then(function () {
+                .then( () => {
                   // always executed
+                  this.classifying = false
                 })
                 
             );
@@ -140,8 +147,8 @@ class Search extends React.Component {
             JSON.parse(content, (key, val) => {
 
                 if (typeof val === 'string') {
-                    //val = val.substring(0, val.length - 1);
-                    val = "" + val.match(/\d+/g);
+                    val = "" + val.match(/[\d\.]+/g);
+                    console.log("======val : " + val);
                     let temp = { name: key, value: val};
                     jsonData.push(temp);
                 } else if (typeof key === 'string' && key.length > 0) {
@@ -151,12 +158,15 @@ class Search extends React.Component {
               });
               this.setState({result: jsonData});
               e.target.value = null;
+              this.input.value = "";
+
         }
 
     }
     render() {
         console.log("render search ui");
         const {result} = this.state;
+
         return (
             <div className='App'>
                 <form onSubmit={this.handleFormSubmit}>
@@ -166,6 +176,7 @@ class Search extends React.Component {
                         <input
                             type='text'
                             onChange={this.inputHandler}
+                            ref={(input) => this.input = input}
                             placeholder="e.g. #covid19"
                         />
                         <button id='btn_search' className='button' type="submit" onClick={this.handleFormSubmit}>Classify</button>
