@@ -111,9 +111,15 @@ class Search extends React.Component {
                     let jsonData = [];
                     Object.keys(data[key1]).map(key2 => {
                         let val = data[key1][key2];
-                        val = "" + val.match(/[\d\.]+/g);
-                        let temp = { name: key2, value: val};
-                        jsonData.push(temp);
+                        if (typeof val === 'number') {
+                          let temp = { name: key2, value: val};
+                          jsonData.push(temp);
+                        } else {
+                          val = "" + val.match(/[\d\.]+/g);
+                          let temp = { name: key2, value: val};
+                          jsonData.push(temp);
+                        }
+
                         return key2;
                     });
                     this.input.value = "";
@@ -145,8 +151,12 @@ class Search extends React.Component {
             
             let jsonData = [];
             JSON.parse(content, (key, val) => {
-
-                if (typeof val === 'string') {
+                console.log("=======type " + typeof val);
+                if(typeof val === 'number') {
+                    console.log("======val (number) : " + val);
+                    let temp = { name: key, value: val};
+                    jsonData.push(temp);
+                } else if (typeof val === 'string') {
                     val = "" + val.match(/[\d\.]+/g);
                     console.log("======val : " + val);
                     let temp = { name: key, value: val};
