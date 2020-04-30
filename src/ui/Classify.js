@@ -6,7 +6,7 @@ import axios from "axios";
 
 const API_URL =  " http://localhost:5000/";
 
-class Search extends React.Component {
+class Classify extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -33,39 +33,6 @@ class Search extends React.Component {
           currentDate = Date.now();
         } while (currentDate - date < milliseconds);
       }
-
-    // fetchWithDelay = (url) => {
-    //     const promise = new Promise((resolve, reject) => {
-    //       setTimeout(() => {
-    //         // resolve(fetch(url, {
-    //         //   method: 'GET',
-    //         // })
-    //         //   .then((response) => response.json()));
-            
-    //         resolve(this.axios_instance.get('/classify')
-    //             .then(function (response) {
-    //               // handle success
-    //               console.log(response);
-    //               return response.data;
-    //             })
-    //             .catch(function (error) {
-    //               // handle error
-    //               console.log(error);
-    //             })
-    //             .then(function () {
-    //               // always executed
-    //             }));
-
-    //         // resolve(this.axios_instance.get('/classify')
-    //         //   .then((response) => response.json()));
-
-    //         // var timeout = 3000;
-    //         // resolve(timeout) 
-    //       })
-    //     });
-      
-    //     return promise;
-    //   }
 
     handleFormSubmit = e => {
         e.preventDefault();
@@ -147,28 +114,95 @@ class Search extends React.Component {
         reader.readAsText(files[0]);
 
         reader.onload = (e) => {
-            const content = e.target.result;
+            // const content = e.target.result;
+
+            this.keyword_search = e.target.result;
+
+            this.keyword_search = this.keyword_search.replace(/(?:\r\n|\r|\n)/g, ';');
+
+            console.log("keyword_search 2 : " + this.keyword_search);
+            if (this.classifying || this.keyword_search == "") {
+              return;
+            }
+            this.classifying = true;
+            trackPromise(
+              this.axios_instance.post('/classify', {
+                text: this.keyword_search
+              }, {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              })
+              .then(function (response) {
+                console.log(response);
+              })
+              .catch(function (error) {
+                console.log(error);
+              })
+                
+            );
+
             
-            let jsonData = [];
-            JSON.parse(content, (key, val) => {
-                console.log("=======type " + typeof val);
-                if(typeof val === 'number') {
-                    console.log("======val (number) : " + val);
-                    let temp = { name: key, value: val};
-                    jsonData.push(temp);
-                } else if (typeof val === 'string') {
-                    val = "" + val.match(/[\d\.]+/g);
-                    console.log("======val : " + val);
-                    let temp = { name: key, value: val};
-                    jsonData.push(temp);
-                } else if (typeof key === 'string' && key.length > 0) {
-                    this.keyword_search = key;
-                }
-                return key;
-              });
-              this.setState({result: jsonData});
-              e.target.value = null;
-              this.input.value = "";
+            trackPromise(
+              this.axios_instance.get('/classify')
+                .then(response => {
+                    // handle success
+                    console.log(response);
+                    let data = response.data;
+                    let key1 = Object.keys(data).map(key => {
+                      return key;
+                    });
+        
+                    let jsonData = [];
+                    Object.keys(data[key1]).map(key2 => {
+                        let val = data[key1][key2];
+                        if (typeof val === 'number') {
+                          let temp = { name: key2, value: val};
+                          jsonData.push(temp);
+                        } else {
+                          val = "" + val.match(/[\d\.]+/g);
+                          let temp = { name: key2, value: val};
+                          jsonData.push(temp);
+                        }
+
+                        return key2;
+                    });
+                    this.input.value = "";
+                    this.setState({result: jsonData});
+                })
+                .catch(function (error) {
+                  // handle error
+                  console.log(error);
+                })
+                .then( () => {
+                  // always executed
+                  this.classifying = false
+                })
+                
+            );
+
+               
+            // );
+            // let jsonData = [];
+            // JSON.parse(content, (key, val) => {
+            //     console.log("=======type " + typeof val);
+            //     if(typeof val === 'number') {
+            //         console.log("======val (number) : " + val);
+            //         let temp = { name: key, value: val};
+            //         jsonData.push(temp);
+            //     } else if (typeof val === 'string') {
+            //         val = "" + val.match(/[\d\.]+/g);
+            //         console.log("======val : " + val);
+            //         let temp = { name: key, value: val};
+            //         jsonData.push(temp);
+            //     } else if (typeof key === 'string' && key.length > 0) {
+            //         this.keyword_search = key;
+            //     }
+            //     return key;
+            //   });
+            //   this.setState({result: jsonData});
+            //   e.target.value = null;
+            //   this.input.value = "";
 
         }
 
@@ -218,4 +252,4 @@ class Search extends React.Component {
 }
 
 
-export default Search;
+export default Classify;
