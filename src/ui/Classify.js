@@ -180,9 +180,9 @@ class Search extends React.Component {
         return (
             <div className='App'>
                 <form onSubmit={this.handleFormSubmit}>
-                    <h1>Welcome come to Sentimental Analysis</h1>
+                    <h1>Welcome to Sentimental Analysis Web User Interface</h1>
                     <div class='block'>
-                    <label>Enter a keyword: </label>
+                    <label>Enter a tweet: </label>
                         <input
                             type='text'
                             onChange={this.inputHandler}
